@@ -1,19 +1,10 @@
-from pytun import TunTapDevice
-import socket
+from pytun import TunTapDevice, IFF_NO_PI, IFF_TUN
 
-tun = TunTapDevice(name='mytun')
+tun = TunTapDevice(name="tun", flags=(IFF_TUN | IFF_NO_PI))
 tun.addr = '192.168.13.10'
-tun.up()
-
-port = 6333
-
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.bind((tun.addr, port))
-    s.listen()
-    conn, addr = s.accept()
-    with conn:
-        while True:
-            data = conn.recv(1024)
-            if not data:
-                break
-            conn.sendall(data)
+tun.dstaddr = '192.168.13.1'
+tun.netmask = '255.255.0.0'
+tun.persist(True)
+tun.mtu = 1500
+buf = tun.read(tun.mtu)
+tun.write(buf)
